@@ -1,0 +1,908 @@
+openapi: 3.0.3
+info:
+  title: Employee & Task Management API
+  description: |
+    A comprehensive employee and task management system API built with Express.js and TypeScript.
+    This API provides:
+    - User authentication (JWT-based)
+    - Employee management
+    - Task management with assignment tracking
+    
+    All employee and task endpoints require JWT authentication.
+  version: 2.0.0
+
+servers:
+  - url: http://localhost:8080
+    description: Local development server
+
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user
+      description: Create a new user account with email and password
+      operationId: registerUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@company.com"
+                password:
+                  type: string
+                  format: password
+                  minLength: 8
+                  example: "SecurePass123"
+                role:
+                  type: string
+                  enum: [admin, employee]
+                  default: employee
+                  example: "employee"
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "User registered successfully"
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /auth/login:
+    post:
+      summary: Login user
+      description: Authenticate user and receive JWT token
+      operationId: loginUser
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "employee@company.com"
+                password:
+                  type: string
+                  format: password
+                  example: "EmployeePassword123"
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Login successful"
+                  data:
+                    type: object
+                    properties:
+                      user:
+                        $ref: '#/components/schemas/User'
+                      token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /employees:
+    get:
+      summary: List all employees
+      description: Retrieve a list of all employees with pagination support
+      operationId: getEmployees
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Number of employees per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: Employees retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Employees retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Employee'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        description: Total number of employees
+                        example: 50
+                      page:
+                        type: integer
+                        description: Current page number
+                        example: 1
+                      totalPages:
+                        type: integer
+                        description: Total number of pages
+                        example: 5
+                      limit:
+                        type: integer
+                        description: Number of items per page
+                        example: 10
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    post:
+      summary: Create a new employee
+      description: Create a new employee profile
+      operationId: createEmployee
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+      responses:
+        '201':
+          description: Employee created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Employee created successfully"
+                  data:
+                    $ref: '#/components/schemas/Employee'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /employees/{id}:
+    get:
+      summary: Get employee by ID
+      description: Retrieve a specific employee by their ID
+      operationId: getEmployeeById
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Employee ID
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Employee retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Employee retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/Employee'
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    put:
+      summary: Update employee
+      description: Update an existing employee
+      operationId: updateEmployee
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Employee ID
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmployeeRequest'
+      responses:
+        '200':
+          description: Employee updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Employee updated successfully"
+                  data:
+                    $ref: '#/components/schemas/Employee'
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    delete:
+      summary: Delete employee
+      description: Delete an existing employee
+      operationId: deleteEmployee
+      tags:
+        - Employees
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Employee ID
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Employee deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '404':
+          description: Employee not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /tasks:
+    get:
+      summary: List user's tasks
+      description: Retrieve tasks assigned to the current user with optional filters
+      operationId: getTasks
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: status
+          in: query
+          description: Filter tasks by status
+          required: false
+          schema:
+            type: string
+            enum: [todo, in_progress, done]
+            example: "todo"
+        - name: page
+          in: query
+          description: Page number for pagination
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+            example: 1
+        - name: limit
+          in: query
+          description: Number of tasks per page
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 10
+      responses:
+        '200':
+          description: Tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Tasks retrieved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Task'
+                  pagination:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 50
+                      page:
+                        type: integer
+                        example: 1
+                      totalPages:
+                        type: integer
+                        example: 5
+                      limit:
+                        type: integer
+                        example: 10
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    post:
+      summary: Create a new task
+      description: Create a new task (defaults to assigning to current user)
+      operationId: createTask
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateTaskRequest'
+      responses:
+        '201':
+          description: Task created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Task created successfully"
+                  data:
+                    $ref: '#/components/schemas/Task'
+        '400':
+          description: Bad request - validation error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /tasks/{id}:
+    get:
+      summary: Get task by ID
+      description: Retrieve a specific task (must be owner or assignee)
+      operationId: getTaskById
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Task ID
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Task retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Task retrieved successfully"
+                  data:
+                    $ref: '#/components/schemas/Task'
+        '403':
+          description: Forbidden - not owner or assignee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    put:
+      summary: Update task
+      description: Update an existing task (must be owner or assignee)
+      operationId: updateTask
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Task ID
+          required: true
+          schema:
+            type: integer
+            example: 1
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateTaskRequest'
+      responses:
+        '200':
+          description: Task updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Task updated successfully"
+                  data:
+                    $ref: '#/components/schemas/Task'
+        '403':
+          description: Forbidden - not owner or assignee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    delete:
+      summary: Delete task
+      description: Delete an existing task (must be owner or assignee)
+      operationId: deleteTask
+      tags:
+        - Tasks
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          description: Task ID
+          required: true
+          schema:
+            type: integer
+            example: 1
+      responses:
+        '200':
+          description: Task deleted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SuccessResponse'
+        '403':
+          description: Forbidden - not owner or assignee
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: Task not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login or /auth/register
+
+  responses:
+    UnauthorizedError:
+      description: Missing or invalid authentication token
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success:
+                type: boolean
+                example: false
+              message:
+                type: string
+                example: "Missing or invalid Authorization header"
+
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the user
+          example: 1
+        email:
+          type: string
+          format: email
+          description: User's email address
+          example: "user@company.com"
+        role:
+          type: string
+          enum: [admin, employee]
+          description: User's role
+          example: "employee"
+      required:
+        - id
+        - email
+        - role
+
+    Employee:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the employee
+          example: 1
+        user_id:
+          type: integer
+          description: Associated user account ID
+          example: 1
+        first_name:
+          type: string
+          description: Employee's first name
+          example: "John"
+        last_name:
+          type: string
+          description: Employee's last name
+          example: "Doe"
+        department:
+          type: string
+          description: Department where employee works
+          example: "Engineering"
+          nullable: true
+        position:
+          type: string
+          description: Employee's job position
+          example: "Software Engineer"
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when employee was created
+          example: "2026-01-14T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when employee was last updated
+          example: "2026-01-14T10:30:00Z"
+      required:
+        - id
+        - user_id
+        - first_name
+        - last_name
+
+    CreateEmployeeRequest:
+      type: object
+      properties:
+        user_id:
+          type: integer
+          description: User account ID to link to this employee
+          example: 1
+        first_name:
+          type: string
+          description: Employee's first name
+          example: "John"
+          minLength: 1
+        last_name:
+          type: string
+          description: Employee's last name
+          example: "Doe"
+          minLength: 1
+        department:
+          type: string
+          description: Department where employee works
+          example: "Engineering"
+        position:
+          type: string
+          description: Employee's job position
+          example: "Software Engineer"
+      required:
+        - user_id
+        - first_name
+        - last_name
+
+    UpdateEmployeeRequest:
+      type: object
+      properties:
+        first_name:
+          type: string
+          description: Employee's first name
+          example: "John"
+          minLength: 1
+        last_name:
+          type: string
+          description: Employee's last name
+          example: "Doe"
+          minLength: 1
+        department:
+          type: string
+          description: Department where employee works
+          example: "Engineering"
+        position:
+          type: string
+          description: Employee's job position
+          example: "Senior Software Engineer"
+
+    Task:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Unique identifier for the task
+          example: 1
+        title:
+          type: string
+          description: Task title
+          example: "Complete onboarding"
+        description:
+          type: string
+          description: Detailed task description
+          example: "Read company handbook and complete setup"
+          nullable: true
+        status:
+          type: string
+          enum: [todo, in_progress, done]
+          description: Current status of the task
+          example: "todo"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          description: Task priority level
+          example: "high"
+        due_date:
+          type: string
+          format: date
+          description: Task due date (YYYY-MM-DD)
+          example: "2026-01-21"
+          nullable: true
+        assigned_to_user_id:
+          type: integer
+          description: ID of user assigned to this task
+          example: 2
+        created_by_user_id:
+          type: integer
+          description: ID of user who created this task
+          example: 1
+        created_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was created
+          example: "2026-01-14T10:30:00Z"
+        updated_at:
+          type: string
+          format: date-time
+          description: Timestamp when task was last updated
+          example: "2026-01-14T10:30:00Z"
+      required:
+        - id
+        - title
+        - status
+        - priority
+        - assigned_to_user_id
+        - created_by_user_id
+
+    CreateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Task title
+          example: "Complete onboarding"
+          minLength: 1
+        description:
+          type: string
+          description: Detailed task description
+          example: "Read company handbook and complete setup"
+        status:
+          type: string
+          enum: [todo, in_progress, done]
+          description: Initial status (defaults to 'todo')
+          default: todo
+          example: "todo"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          description: Task priority (defaults to 'medium')
+          default: medium
+          example: "high"
+        due_date:
+          type: string
+          format: date
+          description: Task due date (YYYY-MM-DD)
+          example: "2026-01-21"
+        assigned_to_user_id:
+          type: integer
+          description: ID of user to assign (defaults to current user)
+          example: 2
+      required:
+        - title
+
+    UpdateTaskRequest:
+      type: object
+      properties:
+        title:
+          type: string
+          description: Task title
+          example: "Complete onboarding process"
+          minLength: 1
+        description:
+          type: string
+          description: Detailed task description
+          example: "Updated description"
+        status:
+          type: string
+          enum: [todo, in_progress, done]
+          description: Task status
+          example: "in_progress"
+        priority:
+          type: string
+          enum: [low, medium, high]
+          description: Task priority
+          example: "high"
+        due_date:
+          type: string
+          format: date
+          description: Task due date (YYYY-MM-DD)
+          example: "2026-01-21"
+        assigned_to_user_id:
+          type: integer
+          description: ID of user to assign
+          example: 3
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation completed successfully"
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "An error occurred"
+
+tags:
+  - name: Authentication
+    description: User registration and login operations
+  - name: Employees
+    description: Employee management operations (requires authentication)
+  - name: Tasks
+    description: Task management operations (requires authentication)
