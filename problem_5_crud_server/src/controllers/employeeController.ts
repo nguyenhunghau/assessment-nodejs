@@ -11,37 +11,50 @@ export const EmployeeController = {
         logger.warn('Create employee failed: Unauthorized');
         return res.status(401).json({
           success: false,
-          message: 'Unauthorized'
+          message: 'Unauthorized',
         });
       }
 
       if (req.user.role !== 'admin') {
-        logger.error('Create employee failed: Forbidden - admin role required', {
-          userId: req.user.id,
-          role: req.user.role
-        });
+        logger.error(
+          'Create employee failed: Forbidden - admin role required',
+          {
+            userId: req.user.id,
+            role: req.user.role,
+          }
+        );
         return res.status(403).json({
           success: false,
-          message: 'Forbidden: Only administrators can create employees'
+          message: 'Forbidden: Only administrators can create employees',
         });
       }
 
-      const employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'> = req.body;
-      logger.debug('Create employee request received', { userId: employeeData.user_id, adminId: req.user.id });
+      const employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'> =
+        req.body;
+      logger.debug('Create employee request received', {
+        userId: employeeData.user_id,
+        adminId: req.user.id,
+      });
 
       const employee = await employeeService.createEmployee(employeeData);
 
-      logger.info('Create employee request successful', { employeeId: employee.id, adminId: req.user.id });
+      logger.info('Create employee request successful', {
+        employeeId: employee.id,
+        adminId: req.user.id,
+      });
       return res.status(201).json({
         success: true,
         message: 'Employee created successfully',
-        data: employee
+        data: employee,
       });
     } catch (error) {
-      logger.warn('Create employee request failed', { error: error instanceof Error ? error.message : 'Unknown error' });
+      logger.warn('Create employee request failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
       return res.status(400).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to create employee'
+        message:
+          error instanceof Error ? error.message : 'Failed to create employee',
       });
     }
   },
@@ -52,11 +65,21 @@ export const EmployeeController = {
       const pageNum = parseInt(page as string);
       const limitNum = parseInt(limit as string);
       const offset = (pageNum - 1) * limitNum;
-      
-      logger.debug('List employees request received', { page: pageNum, limit: limitNum });
-      const result = await employeeService.getEmployees({ limit: limitNum, offset });
-      
-      logger.info('List employees request successful', { count: result.data.length, total: result.total, page: result.page });
+
+      logger.debug('List employees request received', {
+        page: pageNum,
+        limit: limitNum,
+      });
+      const result = await employeeService.getEmployees({
+        limit: limitNum,
+        offset,
+      });
+
+      logger.info('List employees request successful', {
+        count: result.data.length,
+        total: result.total,
+        page: result.page,
+      });
       return res.status(200).json({
         success: true,
         message: 'Employees retrieved successfully',
@@ -65,14 +88,15 @@ export const EmployeeController = {
           total: result.total,
           page: result.page,
           limit: limitNum,
-          totalPages: result.totalPages
-        }
+          totalPages: result.totalPages,
+        },
       });
     } catch (error) {
       logger.error('List employees request failed', error);
       return res.status(500).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to fetch employees'
+        message:
+          error instanceof Error ? error.message : 'Failed to fetch employees',
       });
     }
   },
@@ -81,10 +105,12 @@ export const EmployeeController = {
     try {
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        logger.warn('Get employee by ID failed: Invalid ID', { id: req.params.id });
+        logger.warn('Get employee by ID failed: Invalid ID', {
+          id: req.params.id,
+        });
         return res.status(400).json({
           success: false,
-          message: 'Invalid employee ID'
+          message: 'Invalid employee ID',
         });
       }
 
@@ -94,14 +120,20 @@ export const EmployeeController = {
       return res.status(200).json({
         success: true,
         message: 'Employee retrieved successfully',
-        data: employee
+        data: employee,
       });
     } catch (error) {
-      logger.warn('Get employee by ID request failed', { error: error instanceof Error ? error.message : 'Unknown error' });
-      const statusCode = error instanceof Error && error.message === 'Employee not found' ? 404 : 500;
+      logger.warn('Get employee by ID request failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      const statusCode =
+        error instanceof Error && error.message === 'Employee not found'
+          ? 404
+          : 500;
       return res.status(statusCode).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to fetch employee'
+        message:
+          error instanceof Error ? error.message : 'Failed to fetch employee',
       });
     }
   },
@@ -113,16 +145,18 @@ export const EmployeeController = {
         logger.warn('Update employee failed: Unauthorized');
         return res.status(401).json({
           success: false,
-          message: 'Unauthorized'
+          message: 'Unauthorized',
         });
       }
 
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        logger.warn('Update employee failed: Invalid ID', { id: req.params.id });
+        logger.warn('Update employee failed: Invalid ID', {
+          id: req.params.id,
+        });
         return res.status(400).json({
           success: false,
-          message: 'Invalid employee ID'
+          message: 'Invalid employee ID',
         });
       }
 
@@ -133,35 +167,51 @@ export const EmployeeController = {
         const existingEmployee = await employeeService.getEmployeeById(id);
 
         if (existingEmployee.user_id !== req.user.id) {
-          logger.error('Update employee failed: Forbidden - can only update own record', {
-            userId: req.user.id,
-            employeeUserId: existingEmployee.user_id,
-            employeeId: id
-          });
+          logger.error(
+            'Update employee failed: Forbidden - can only update own record',
+            {
+              userId: req.user.id,
+              employeeUserId: existingEmployee.user_id,
+              employeeId: id,
+            }
+          );
           return res.status(403).json({
             success: false,
-            message: 'Forbidden: You can only update your own employee record'
+            message: 'Forbidden: You can only update your own employee record',
           });
         }
       }
 
       const updates: Partial<Omit<Employee, 'id' | 'created_at'>> = req.body;
-      logger.debug('Update employee request received', { employeeId: id, userId: req.user.id, role: req.user.role });
+      logger.debug('Update employee request received', {
+        employeeId: id,
+        userId: req.user.id,
+        role: req.user.role,
+      });
 
       const employee = await employeeService.updateEmployee(id, updates);
 
-      logger.info('Update employee request successful', { employeeId: id, userId: req.user.id });
+      logger.info('Update employee request successful', {
+        employeeId: id,
+        userId: req.user.id,
+      });
       return res.status(200).json({
         success: true,
         message: 'Employee updated successfully',
-        data: employee
+        data: employee,
       });
     } catch (error) {
-      logger.warn('Update employee request failed', { error: error instanceof Error ? error.message : 'Unknown error' });
-      const statusCode = error instanceof Error && error.message === 'Employee not found' ? 404 : 400;
+      logger.warn('Update employee request failed', {
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
+      const statusCode =
+        error instanceof Error && error.message === 'Employee not found'
+          ? 404
+          : 400;
       return res.status(statusCode).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to update employee'
+        message:
+          error instanceof Error ? error.message : 'Failed to update employee',
       });
     }
   },
@@ -173,44 +223,59 @@ export const EmployeeController = {
         logger.warn('Delete employee failed: Unauthorized');
         return res.status(401).json({
           success: false,
-          message: 'Unauthorized'
+          message: 'Unauthorized',
         });
       }
 
       if (req.user.role !== 'admin') {
-        logger.error('Delete employee failed: Forbidden - admin role required', {
-          userId: req.user.id,
-          role: req.user.role
-        });
+        logger.error(
+          'Delete employee failed: Forbidden - admin role required',
+          {
+            userId: req.user.id,
+            role: req.user.role,
+          }
+        );
         return res.status(403).json({
           success: false,
-          message: 'Forbidden: Only administrators can delete employees'
+          message: 'Forbidden: Only administrators can delete employees',
         });
       }
 
       const id = parseInt(req.params.id);
       if (isNaN(id)) {
-        logger.warn('Delete employee failed: Invalid ID', { id: req.params.id });
+        logger.warn('Delete employee failed: Invalid ID', {
+          id: req.params.id,
+        });
         return res.status(400).json({
           success: false,
-          message: 'Invalid employee ID'
+          message: 'Invalid employee ID',
         });
       }
 
-      logger.debug('Delete employee request received', { employeeId: id, adminId: req.user.id });
+      logger.debug('Delete employee request received', {
+        employeeId: id,
+        adminId: req.user.id,
+      });
       await employeeService.deleteEmployee(id);
 
-      logger.info('Delete employee request successful', { employeeId: id, adminId: req.user.id });
+      logger.info('Delete employee request successful', {
+        employeeId: id,
+        adminId: req.user.id,
+      });
       return res.status(200).json({
         success: true,
-        message: 'Employee deleted successfully'
+        message: 'Employee deleted successfully',
       });
     } catch (error) {
-      const statusCode = error instanceof Error && error.message === 'Employee not found' ? 404 : 500;
+      const statusCode =
+        error instanceof Error && error.message === 'Employee not found'
+          ? 404
+          : 500;
       return res.status(statusCode).json({
         success: false,
-        message: error instanceof Error ? error.message : 'Failed to delete employee'
+        message:
+          error instanceof Error ? error.message : 'Failed to delete employee',
       });
     }
-  }
+  },
 };

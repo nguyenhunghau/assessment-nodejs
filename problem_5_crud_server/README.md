@@ -5,9 +5,9 @@ A comprehensive backend server built with ExpressJS and TypeScript that provides
 ## Features
 
 ### 🔐 Authentication & Authorization
-- ✅ **User Registration** - Create new user accounts with email/password
+- ✅ **User Registration** - Create new user accounts with email/password (employee role only)
 - ✅ **User Login** - JWT-based authentication
-- ✅ **Role Management** - Admin and employee roles
+- ✅ **Role Management** - Admin and employee roles (admin accounts created via database)
 - ✅ **Protected Routes** - Secure endpoints with JWT middleware
 - ✅ **Password Security** - Bcrypt password hashing
 
@@ -167,8 +167,7 @@ curl -X POST http://localhost:8080/auth/register \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@company.com",
-    "password": "SecurePass123",
-    "role": "employee"
+    "password": "SecurePass123"
   }'
 ```
 
@@ -187,6 +186,8 @@ curl -X POST http://localhost:8080/auth/register \
   }
 }
 ```
+
+> **Note:** All registered users are automatically assigned the 'employee' role. Admin accounts must be created through database seeding or manual insertion.
 
 ### 2. Login
 ```bash
