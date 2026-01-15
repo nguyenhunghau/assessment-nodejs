@@ -2,7 +2,12 @@ import { Request, Response, NextFunction } from 'express';
 import { logger } from '../util/logger';
 import { CustomError } from '../util/CustomError';
 
-export const errorHandler = (err: any, req: Request, res: Response, next: NextFunction) => {
+export const errorHandler = (
+  err: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+) => {
   // Default error values
   let statusCode = 500;
   let message = 'Internal Server Error';
@@ -62,13 +67,17 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
   }
 
   // Log the error
-  const clientIp = req.ip || req.socket.remoteAddress || req.headers['x-forwarded-for'] || 'unknown';
+  const clientIp =
+    req.ip ||
+    req.socket.remoteAddress ||
+    req.headers['x-forwarded-for'] ||
+    'unknown';
   logger.error('Error handled by error handler', err, {
     path: req.path,
     method: req.method,
     statusCode,
     userAgent: req.get('user-agent'),
-    ip: clientIp
+    ip: clientIp,
   });
 
   // Send error response
@@ -77,23 +86,27 @@ export const errorHandler = (err: any, req: Request, res: Response, next: NextFu
     message,
     ...(process.env.NODE_ENV === 'development' && {
       stack: err.stack,
-      error: err
-    })
+      error: err,
+    }),
   });
 };
 
 // 404 Not Found handler
 export const notFoundHandler = (req: Request, res: Response) => {
-  const clientIp = req.ip || req.socket.remoteAddress || req.headers['x-forwarded-for'] || 'unknown';
+  const clientIp =
+    req.ip ||
+    req.socket.remoteAddress ||
+    req.headers['x-forwarded-for'] ||
+    'unknown';
   logger.warn('404 Not Found', {
     path: req.path,
     method: req.method,
-    ip: clientIp
+    ip: clientIp,
   });
 
   res.status(404).json({
     success: false,
     message: 'Route not found',
-    path: req.path
+    path: req.path,
   });
 };

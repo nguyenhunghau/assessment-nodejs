@@ -19,7 +19,7 @@ paths:
   /auth/register:
     post:
       summary: Register a new user
-      description: Create a new user account with email and password
+      description: Create a new user account with email and password. All registered users are assigned the 'employee' role. Admin accounts must be created through other means.
       operationId: registerUser
       tags:
         - Authentication
@@ -42,11 +42,6 @@ paths:
                   format: password
                   minLength: 8
                   example: "SecurePass123"
-                role:
-                  type: string
-                  enum: [admin, employee]
-                  default: employee
-                  example: "employee"
       responses:
         '201':
           description: User registered successfully

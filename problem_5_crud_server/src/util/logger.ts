@@ -2,7 +2,7 @@ export enum LogLevel {
   DEBUG = 0,
   INFO = 1,
   WARN = 2,
-  ERROR = 3
+  ERROR = 3,
 }
 
 class Logger {
@@ -43,9 +43,10 @@ class Logger {
 
   error(message: string, error?: any, meta?: any): void {
     if (this.shouldLog(LogLevel.ERROR)) {
-      const errorInfo = error instanceof Error
-        ? { message: error.message, stack: error.stack, ...meta }
-        : { error, ...meta };
+      const errorInfo =
+        error instanceof Error
+          ? { message: error.message, stack: error.stack, ...meta }
+          : { error, ...meta };
       console.error(this.formatMessage('ERROR', message, errorInfo));
     }
   }
