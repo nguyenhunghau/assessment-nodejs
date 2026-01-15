@@ -77,7 +77,7 @@ This document specifies the architecture and implementation requirements for a *
 
 ### High-Level Architecture
 
-![Scoreboard System Architecture](./docs/architecture-diagram.png)
+![Scoreboard System Architecture](https://github.com/nguyenhunghau/assessment-nodejs/blob/main/problem_6_architecture/diagram.png?raw=true)
 
 **Key Components:**
 
