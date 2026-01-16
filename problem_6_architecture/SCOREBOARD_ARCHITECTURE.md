@@ -79,6 +79,12 @@ This document specifies the architecture and implementation requirements for a *
 
 ![Scoreboard System Architecture](https://github.com/nguyenhunghau/assessment-nodejs/blob/main/problem_6_architecture/diagram.png?raw=true)
 
+### Redis sequence diagram
+![Error handling and Resilience Flow](https://github.com/nguyenhunghau/assessment-nodejs/blob/main/problem_6_architecture/redis_flow.png?raw=true)
+
+### Error handling and Resilience Flow
+![Error handling and Resilience Flow](https://github.com/nguyenhunghau/assessment-nodejs/blob/main/problem_6_architecture/error_handling.png?raw=true)
+
 **Key Components:**
 
 - **API Gateway**: Entry point for all HTTP requests, handles authentication and routing
@@ -86,7 +92,7 @@ This document specifies the architecture and implementation requirements for a *
 - **App Server**: Core business logic, validates actions, calculates scores
 - **RDS Database (AWS)**: Authoritative database storing all user scores and actions
 - **EventBridge (AWS)**: Event bus for asynchronous, decoupled communication. We can use message queue like Kafka
-- **ElastiCache Redis (Sorted Set and Pub/Sub Channel)**: High-speed in-memory cache for leaderboard, uses Sorted Sets for O(log N) performance
+- **ElastiCache Redis (Sorted Set and Pub/Sub Channel)**: High-speed in-memory cache for leaderboard, uses *Sorted Sets* for O(log N) performance
 - **WebSocket API**: Maintains persistent connections with clients for real-time push notifications
 
 **System Flow Description:**

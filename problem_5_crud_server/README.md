@@ -28,7 +28,7 @@ A comprehensive backend server built with ExpressJS and TypeScript that provides
 
 ### 🛠️ Advanced Features
 - 📄 **Pagination Support** - Efficient data retrieval for large datasets
-- 🛡️ **Input Validation** - Comprehensive validation for all operations
+- 🛡️ **Input Validation** - Zod-based schema validation with detailed error messages
 - 🗄️ **Database Persistence** - PostgreSQL with Knex.js ORM
 - 🧪 **Comprehensive Testing** - 47+ unit and integration tests
 - 📚 **OpenAPI Documentation** - Interactive Swagger UI documentation
@@ -40,6 +40,7 @@ A comprehensive backend server built with ExpressJS and TypeScript that provides
 - **Database**: PostgreSQL
 - **ORM**: Knex.js for database operations and migrations
 - **Authentication**: JWT (jsonwebtoken) with bcrypt for password hashing
+- **Validation**: Zod v3 for schema validation and type safety
 - **Testing**: Jest with Supertest (47+ tests)
 - **Documentation**: OpenAPI 3.0.3 with Swagger UI
 - **Development**: Nodemon for hot reload
@@ -66,7 +67,12 @@ ResourceManagement/
 │   │   └── seeds/               # Seed data
 │   │       └── 20260114_seed_company_data.ts
 │   ├── middleware/
-│   │   ├── authMiddleware.ts    # JWT verification  
+│   │   ├── validationMiddleware.ts # Zod validation middleware
+│   │   └── errorHandler.ts      # Error handling middleware
+│   ├── validators/              # Zod validation schemas
+│   │   ├── authValidators.ts    # Auth validation rules
+│   │   ├── employeeValidators.ts # Employee validation rules
+│   │   └── taskValidators.ts    # Task validation rules
 │   │   └── errorHandler.ts      # Error handling middleware
 │   ├── queries/                 # Database operations layer
 │   │   ├── userQueries.ts       # User DB operations  
@@ -444,13 +450,85 @@ Run the comprehensive test suite:
 npm test
 ```
 
-The test suite includes:
-- Unit tests for services and utilities
-- Integration tests for API endpoints
-- Database operation tests
+TheValidation
+
+The API uses **Zod v3** for comprehensive request validation with detailed error messages.
+
+### Validation Flow
+All requests pass through validation middleware before reaching controllers:
+
+```
+Request → Authentication → Validation → Controller → Response
+```
+
+### Validation Features
+- ✅ **Required Field Validation** - Ensures all required fields are present
+- ✅ **Type Validation** - Numbers, strings, enums, dates
+- ✅ **Format Validation** - Email format, date format (YYYY-MM-DD)
+- ✅ **Range Validation** - Min/max length, positive numbers
+- ✅ **Enum Validation** - Status (todo, in_progress, done), Priority (low, medium, high)
+- ✅ **Custom Rules** - At least one field required for updates
+- ✅ **Auto Type Transformation** - String IDs converted to numbers
+
+### Validation Error Response
+When validation fails, the API returns structured error messages:
+
+```json
+{
+  "success": false,
+  "message": "Validation failed",
+  "errors": [
+    {
+      "field": "email",
+      "message": "Invalid email format"
+    },
+    {
+      "field": "first_name",
+      "message": "First name cannot be empty"
+    }
+  ]
+}
+```
+
+### Validation Examples
+
+**Employee Creation:**
+```json
+{
+  "user_id": 1,              // Required: positive integer
+  "first_name": "John",      // Required: 1-100 chars
+  "last_name": "Doe",        // Required: 1-100 chars
+  "department": "Engineering", // Optional: max 100 chars
+  "position": "Developer"    // Optional: max 100 chars
+}
+```
+
+**Task Creation:**
+```json
+{
+  "title": "Task title",     // Required: 1-255 chars
+  "description": "Details",  // Optional: max 1000 chars
+  "status": "todo",          // Optional: [todo, in_progress, done], default: todo
+  "priority": "high",        // Optional: [low, medium, high], default: medium
+  "due_date": "2026-01-20",  // Optional: YYYY-MM-DD format
+  "assigned_to_user_id": 2   // Optional: positive integer
+}
+```
+
+**Update Operations:**
+- At least one field must be provided
+- Only provided fields are validated and updated
+- Strict mode prevents extra fields
+
+📚 **Full documentation:** See [VALIDATION_README.md](VALIDATION_README.md) for complete validation guide, schemas, and implementation details.
 
 ## Error Handling
 
+The API includes comprehensive error handling:
+
+- **400 Bad Request**: Invalid input data, missing required fields, or validation errors
+- **401 Unauthorized**: Missing or invalid JWT token
+- **403 Forbidden**: Insufficient permissions for the operatio
 The API includes comprehensive error handling:
 
 - **400 Bad Request**: Invalid input data or missing required fields

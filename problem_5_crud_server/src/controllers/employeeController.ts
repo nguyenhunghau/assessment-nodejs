@@ -29,6 +29,7 @@ export const EmployeeController = {
         });
       }
 
+      // req.body is already validated by middleware
       const employeeData: Omit<Employee, 'id' | 'created_at' | 'updated_at'> =
         req.body;
       logger.debug('Create employee request received', {
@@ -61,17 +62,16 @@ export const EmployeeController = {
 
   list: async (req: Request, res: Response) => {
     try {
-      const { page = '1', limit = '10' } = req.query;
-      const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
-      const offset = (pageNum - 1) * limitNum;
+      // req.query is already validated and transformed by middleware
+      const { page, limit } = req.query as unknown as { page: number; limit: number };
+      const offset = (page - 1) * limit;
 
       logger.debug('List employees request received', {
-        page: pageNum,
-        limit: limitNum,
+        page,
+        limit,
       });
       const result = await employeeService.getEmployees({
-        limit: limitNum,
+        limit,
         offset,
       });
 
@@ -87,7 +87,7 @@ export const EmployeeController = {
         pagination: {
           total: result.total,
           page: result.page,
-          limit: limitNum,
+          limit,
           totalPages: result.totalPages,
         },
       });
@@ -103,16 +103,8 @@ export const EmployeeController = {
 
   getById: async (req: Request, res: Response) => {
     try {
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        logger.warn('Get employee by ID failed: Invalid ID', {
-          id: req.params.id,
-        });
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid employee ID',
-        });
-      }
+      // req.params is already validated and transformed by middleware
+      const { id } = req.params as unknown as { id: number };
 
       logger.debug('Get employee by ID request received', { employeeId: id });
       const employee = await employeeService.getEmployeeById(id);
@@ -149,16 +141,8 @@ export const EmployeeController = {
         });
       }
 
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        logger.warn('Update employee failed: Invalid ID', {
-          id: req.params.id,
-        });
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid employee ID',
-        });
-      }
+      // req.params and req.body are already validated by middleware
+      const { id } = req.params as unknown as { id: number };
 
       // Check if user has permission to update this employee
       // Admin can update any employee, regular employee can only update their own
@@ -241,16 +225,8 @@ export const EmployeeController = {
         });
       }
 
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        logger.warn('Delete employee failed: Invalid ID', {
-          id: req.params.id,
-        });
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid employee ID',
-        });
-      }
+      // req.params is already validated and transformed by middleware
+      const { id } = req.params as unknown as { id: number };
 
       logger.debug('Delete employee request received', {
         employeeId: id,

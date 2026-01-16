@@ -13,15 +13,10 @@ export const TaskController = {
           .json({ success: false, message: 'Unauthorized' });
       }
 
-      const body = req.body as Partial<Task>;
-
+      // req.body is already validated by middleware with defaults applied
       const taskData: Omit<Task, 'id' | 'created_at' | 'updated_at'> = {
-        title: body.title || '',
-        description: body.description,
-        status: (body.status as any) || 'todo',
-        priority: (body.priority as any) || 'medium',
-        due_date: body.due_date,
-        assigned_to_user_id: body.assigned_to_user_id || req.user.id,
+        ...req.body,
+        assigned_to_user_id: req.body.assigned_to_user_id || req.user.id,
         created_by_user_id: req.user.id,
       };
 
@@ -61,19 +56,22 @@ export const TaskController = {
           .json({ success: false, message: 'Unauthorized' });
       }
 
-      const { status, page = '1', limit = '10' } = req.query;
-      const pageNum = parseInt(page as string);
-      const limitNum = parseInt(limit as string);
-      const offset = (pageNum - 1) * limitNum;
+      // req.query is already validated and transformed by middleware
+      const { status, page, limit } = req.query as unknown as { 
+        status?: 'todo' | 'in_progress' | 'done'; 
+        page: number; 
+        limit: number; 
+      };
+      const offset = (page - 1) * limit;
 
       logger.debug('List tasks request received', {
         userId: req.user.id,
         filters: { status, page, limit },
       });
       const filters: any = {
-        status: status as any,
+        status,
         assignedToUserId: req.user.id,
-        limit: limitNum,
+        limit,
         offset,
       };
 
@@ -98,7 +96,7 @@ export const TaskController = {
           total: result.total,
           page: result.page,
           totalPages: result.totalPages,
-          limit: limitNum,
+          limit,
         },
       });
     } catch (error) {
@@ -120,14 +118,8 @@ export const TaskController = {
           .json({ success: false, message: 'Unauthorized' });
       }
 
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        logger.warn('Get task by ID failed: Invalid ID', { id: req.params.id });
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid task ID',
-        });
-      }
+      // req.params is already validated and transformed by middleware
+      const { id } = req.params as unknown as { id: number };
 
       logger.debug('Get task by ID request received', {
         taskId: id,
@@ -183,14 +175,8 @@ export const TaskController = {
           .json({ success: false, message: 'Unauthorized' });
       }
 
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        logger.warn('Update task failed: Invalid ID', { id: req.params.id });
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid task ID',
-        });
-      }
+      // req.params and req.body are already validated by middleware
+      const { id } = req.params as unknown as { id: number };
 
       logger.debug('Update task request received', {
         taskId: id,
@@ -245,14 +231,8 @@ export const TaskController = {
           .json({ success: false, message: 'Unauthorized' });
       }
 
-      const id = parseInt(req.params.id);
-      if (isNaN(id)) {
-        logger.warn('Delete task failed: Invalid ID', { id: req.params.id });
-        return res.status(400).json({
-          success: false,
-          message: 'Invalid task ID',
-        });
-      }
+      // req.params is already validated and transformed by middleware
+      const { id } = req.params as unknown as { id: number };
 
       logger.debug('Delete task request received', {
         taskId: id,

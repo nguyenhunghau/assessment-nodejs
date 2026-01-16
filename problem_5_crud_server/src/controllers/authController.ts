@@ -5,16 +5,17 @@ import { logger } from '../util/logger';
 export const AuthController = {
   register: async (req: Request, res: Response) => {
     try {
+      // req.body is already validated by middleware
       const { email, password } = req.body as {
-        email?: string;
-        password?: string;
+        email: string;
+        password: string;
       };
       logger.debug('Register request received', { email });
 
       // Only allow employee role registration
       const result = await authService.register({
-        email: email || '',
-        password: password || '',
+        email,
+        password,
         role: 'employee',
       });
 
@@ -38,15 +39,16 @@ export const AuthController = {
 
   login: async (req: Request, res: Response) => {
     try {
+      // req.body is already validated by middleware
       const { email, password } = req.body as {
-        email?: string;
-        password?: string;
+        email: string;
+        password: string;
       };
       logger.debug('Login request received', { email });
 
       const result = await authService.login({
-        email: email || '',
-        password: password || '',
+        email,
+        password,
       });
 
       logger.info('Login request successful', { email: result.user.email });

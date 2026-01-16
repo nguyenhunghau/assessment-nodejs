@@ -1,0 +1,18 @@
+{
+  "name": "problem-4-sums",
+  "version": "1.0.0",
+  "description": "Sum calculation with different approaches",
+  "main": "sum.ts",
+  "scripts": {
+    "start": "ts-node sum.ts",
+    "dev": "ts-node sum.ts"
+  },
+  "keywords": ["sum", "typescript"],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.3"
+  }
+}
